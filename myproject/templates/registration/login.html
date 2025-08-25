@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ログイン - AI習慣形成サポーター</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        
+        .login-container {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+        
+        .login-header {
+            background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .login-form {
+            padding: 2rem;
+        }
+        
+        .form-control {
+            border-radius: 0.5rem;
+            border: 2px solid #e3e6f0;
+            padding: 0.75rem 1rem;
+            transition: all 0.2s;
+        }
+        
+        .form-control:focus {
+            border-color: #4e73df;
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+        }
+        
+        .btn-login {
+            background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 1rem rgba(78, 115, 223, 0.3);
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e3e6f0;
+        }
+        
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .feature-list i {
+            color: #4e73df;
+            margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="login-container">
+                    <!-- ヘッダー -->
+                    <div class="login-header">
+                        <h1 class="mb-3">
+                            <i class="fas fa-brain me-3"></i>
+                            AI習慣形成サポーター
+                        </h1>
+                        <p class="mb-0">あなたの習慣形成をAIがサポートします</p>
+                    </div>
+                    
+                    <!-- ログインフォーム -->
+                    <div class="login-form">
+                        <!-- メッセージ表示 -->
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                        
+                        <!-- ログアウトメッセージ -->
+                        {% if request.GET.logout %}
+                            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                                <i class="fas fa-info-circle me-2"></i>ログアウトしました。再度ログインしてください。
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endif %}
+                        <h4 class="text-center mb-4">ログイン</h4>
+                        
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                ユーザー名またはパスワードが正しくありません。
+                            </div>
+                        {% endif %}
+                        
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="id_username" class="form-label">
+                                    <i class="fas fa-user me-2"></i>ユーザー名
+                                </label>
+                                <input type="text" class="form-control" id="id_username" name="username" required>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="id_password" class="form-label">
+                                    <i class="fas fa-lock me-2"></i>パスワード
+                                </label>
+                                <input type="password" class="form-control" id="id_password" name="password" required>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-login btn-lg text-white">
+                                    <i class="fas fa-sign-in-alt me-2"></i>ログイン
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <div class="text-center mt-4">
+                            <p class="text-muted">
+                                アカウントをお持ちでない場合は、
+                                <a href="#" class="text-decoration-none">管理者にお問い合わせください</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 機能紹介 -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h5 class="card-title text-center mb-3">
+                            <i class="fas fa-star me-2"></i>主な機能
+                        </h5>
+                        <ul class="feature-list">
+                            <li>
+                                <i class="fas fa-book"></i>
+                                日記で気分とエネルギーを記録
+                            </li>
+                            <li>
+                                <i class="fas fa-list-check"></i>
+                                行動ログで習慣を追跡
+                            </li>
+                            <li>
+                                <i class="fas fa-robot"></i>
+                                AIが明日の行動目標を提案
+                            </li>
+                            <li>
+                                <i class="fas fa-chart-line"></i>
+                                データ分析で習慣形成を可視化
+                            </li>
+                            <li>
+                                <i class="fas fa-bullseye"></i>
+                                目標設定と進捗管理
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

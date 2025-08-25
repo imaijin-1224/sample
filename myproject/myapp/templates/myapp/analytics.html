@@ -1,0 +1,387 @@
+{% extends 'myapp/base.html' %}
+
+{% block title %}分析・統計 - AI習慣形成サポーター{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-chart-bar me-2"></i>分析・統計
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'myapp:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>ダッシュボードに戻る
+        </a>
+    </div>
+</div>
+
+<!-- 月間サマリー -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h3 class="card-title">{{ total_diaries }}</h3>
+                <p class="card-text">記録した日記</p>
+                <small>過去30日間</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h3 class="card-title">{{ total_actions }}</h3>
+                <p class="card-text">記録した行動</p>
+                <small>過去30日間</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h3 class="card-title">{{ avg_mood|floatformat:1 }}</h3>
+                <p class="card-text">平均気分</p>
+                <small>過去30日間</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <h3 class="card-title">{{ avg_energy|floatformat:1 }}</h3>
+                <p class="card-text">平均エネルギー</p>
+                <small>過去30日間</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 気分とエネルギーの推移 -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>気分とエネルギーの推移（過去30日間）
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="moodEnergyChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- カテゴリ別の行動統計 -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-pie-chart me-2"></i>カテゴリ別行動数
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="categoryChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>カテゴリ別完了率
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="completionChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 週間の習慣継続率 -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-calendar-week me-2"></i>週間の習慣継続率
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for week in weekly_completion %}
+                    <div class="col-md-3 mb-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ week.week }}</h5>
+                                <div class="progress mb-2" style="height: 20px;">
+                                    <div class="progress-bar {% if week.rate >= 80 %}bg-success{% elif week.rate >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                         role="progressbar" 
+                                         style="width: {{ week.rate }}%"
+                                         aria-valuenow="{{ week.rate }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                        {{ week.rate|floatformat:0 }}%
+                                    </div>
+                                </div>
+                                <small class="text-muted">
+                                    総行動数: {{ week.total }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 詳細統計テーブル -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-table me-2"></i>カテゴリ別詳細統計
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>カテゴリ</th>
+                                <th>総行動数</th>
+                                <th>平均時間（分）</th>
+                                <th>完了率</th>
+                                <th>傾向</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for category in category_analytics %}
+                            <tr>
+                                <td>
+                                    <span class="badge" style="background-color: {{ category.category__name|yesno:'#007bff,#28a745,#ffc107,#dc3545,#6c757d' }};">
+                                        {{ category.category__name }}
+                                    </span>
+                                </td>
+                                <td>{{ category.total_actions }}</td>
+                                <td>{{ category.total_duration|floatformat:1 }}</td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar {% if category.completion_rate >= 80 %}bg-success{% elif category.completion_rate >= 60 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                             role="progressbar" 
+                                             style="width: {{ category.completion_rate }}%"
+                                             aria-valuenow="{{ category.completion_rate }}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                            {{ category.completion_rate|floatformat:1 }}%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if category.completion_rate >= 80 %}
+                                        <span class="text-success">
+                                            <i class="fas fa-arrow-up me-1"></i>優秀
+                                        </span>
+                                    {% elif category.completion_rate >= 60 %}
+                                        <span class="text-warning">
+                                            <i class="fas fa-minus me-1"></i>良好
+                                        </span>
+                                    {% else %}
+                                        <span class="text-danger">
+                                            <i class="fas fa-arrow-down me-1"></i>改善必要
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 分析結果とアドバイス -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>分析結果とアドバイス
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-heart text-danger me-2"></i>気分・エネルギーの分析</h6>
+                        {% if avg_mood >= 7 %}
+                            <div class="alert alert-success">
+                                <strong>素晴らしい気分を維持しています！</strong><br>
+                                この良い状態を活かして、新しい習慣に挑戦するのに適した時期です。
+                            </div>
+                        {% elif avg_mood >= 5 %}
+                            <div class="alert alert-info">
+                                <strong>安定した気分です</strong><br>
+                                小さな改善点を見つけて、さらに良い気分を目指しましょう。
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <strong>気分が低めです</strong><br>
+                                無理をせず、心を労わる時間を作りましょう。軽い運動や趣味の時間がおすすめです。
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-chart-line text-primary me-2"></i>習慣化の進捗</h6>
+                        {% if total_actions >= 50 %}
+                            <div class="alert alert-success">
+                                <strong>素晴らしい習慣化の進捗です！</strong><br>
+                                継続することで、さらに良い結果が期待できます。
+                            </div>
+                        {% elif total_actions >= 20 %}
+                            <div class="alert alert-info">
+                                <strong>良いペースで習慣化が進んでいます</strong><br>
+                                一貫性を保つことで、より効果的な習慣化が可能です。
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <strong>習慣化の初期段階です</strong><br>
+                                小さな目標から始めて、継続しやすい習慣を見つけましょう。
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// 気分とエネルギーの推移チャート
+const moodEnergyCtx = document.getElementById('moodEnergyChart').getContext('2d');
+const moodEnergyChart = new Chart(moodEnergyCtx, {
+    type: 'line',
+    data: {
+        labels: [
+            {% for item in mood_trend %}
+                '{{ item.date|date:"m/d" }}'{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            label: '気分スコア',
+            data: [
+                {% for item in mood_trend %}
+                    {{ item.avg_mood|default:0 }}{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            tension: 0.1
+        }, {
+            label: 'エネルギーレベル',
+            data: [
+                {% for item in mood_trend %}
+                    {{ item.avg_energy|default:0 }}{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            borderColor: 'rgb(255, 205, 86)',
+            backgroundColor: 'rgba(255, 205, 86, 0.2)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 10
+            }
+        }
+    }
+});
+
+// カテゴリ別行動数チャート
+const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+const categoryChart = new Chart(categoryCtx, {
+    type: 'doughnut',
+    data: {
+        labels: [
+            {% for category in category_analytics %}
+                '{{ category.category__name }}'{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            data: [
+                {% for category in category_analytics %}
+                    {{ category.total_actions }}{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            backgroundColor: [
+                '#FF6384',
+                '#36A2EB',
+                '#FFCE56',
+                '#4BC0C0',
+                '#9966FF',
+                '#FF9F40'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// 完了率チャート
+const completionCtx = document.getElementById('completionChart').getContext('2d');
+const completionChart = new Chart(completionCtx, {
+    type: 'bar',
+    data: {
+        labels: [
+            {% for category in category_analytics %}
+                '{{ category.category__name }}'{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            label: '完了率（%）',
+            data: [
+                {% for category in category_analytics %}
+                    {{ category.completion_rate|default:0 }}{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            backgroundColor: [
+                {% for category in category_analytics %}
+                    '{% if category.completion_rate >= 80 %}rgba(40, 167, 69, 0.8){% elif category.completion_rate >= 60 %}rgba(255, 193, 7, 0.8){% else %}rgba(220, 53, 69, 0.8){% endif %}'{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            borderColor: [
+                {% for category in category_analytics %}
+                    '{% if category.completion_rate >= 80 %}#28a745{% elif category.completion_rate >= 60 %}#ffc107{% else %}#dc3545{% endif %}'{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

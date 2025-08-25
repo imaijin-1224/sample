@@ -1,0 +1,295 @@
+{% extends 'myapp/base.html' %}
+
+{% block title %}プロフィール - AI習慣形成サポーター{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-user me-2"></i>プロフィール
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'myapp:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>ダッシュボードに戻る
+        </a>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- プロフィール編集フォーム -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-edit me-2"></i>プロフィール設定
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="bio" class="form-label">
+                            <i class="fas fa-user-edit me-2"></i>自己紹介
+                        </label>
+                        <textarea class="form-control" id="bio" name="bio" rows="4" 
+                                  placeholder="あなたについて、目標や興味のあることを教えてください">{{ profile.bio|default:'' }}</textarea>
+                        <div class="form-text">
+                            自己紹介を書くことで、AIがよりあなたに合った提案をできるようになります
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="ai_feedback_frequency" class="form-label">
+                            <i class="fas fa-robot me-2"></i>AIフィードバックの頻度
+                        </label>
+                        <select class="form-select" id="ai_feedback_frequency" name="ai_feedback_frequency">
+                            <option value="daily" {% if profile.ai_feedback_frequency == 'daily' %}selected{% endif %}>毎日</option>
+                            <option value="weekly" {% if profile.ai_feedback_frequency == 'weekly' %}selected{% endif %}>週1回</option>
+                            <option value="biweekly" {% if profile.ai_feedback_frequency == 'biweekly' %}selected{% endif %}>2週間に1回</option>
+                            <option value="monthly" {% if profile.ai_feedback_frequency == 'monthly' %}selected{% endif %}>月1回</option>
+                        </select>
+                        <div class="form-text">
+                            AIからの提案や振り返りの頻度を設定できます
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-bell me-2"></i>通知設定
+                        </label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="notification_enabled" name="notification_enabled" 
+                                   {% if profile.notification_enabled %}checked{% endif %}>
+                            <label class="form-check-label" for="notification_enabled">
+                                通知を有効にする
+                            </label>
+                        </div>
+                        <div class="form-text">
+                            習慣化のリマインダーやAI提案の通知を受け取ります
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-tags me-2"></i>興味のある習慣カテゴリ
+                        </label>
+                        <div class="row">
+                            {% for category in categories %}
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" 
+                                           id="category_{{ category.id }}" 
+                                           name="preferred_categories" 
+                                           value="{{ category.id }}"
+                                           {% if category in profile.preferred_categories.all %}checked{% endif %}>
+                                    <label class="form-check-label" for="category_{{ category.id }}">
+                                        <span class="badge" style="background-color: {{ category.color }};">
+                                            {{ category.name }}
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="form-text">
+                            興味のあるカテゴリを選択すると、より関連性の高い提案を受け取れます
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>保存
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- アカウント情報 -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>アカウント情報
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>ユーザー名:</strong> {{ user.username }}</p>
+                        <p><strong>メールアドレス:</strong> {{ user.email|default:"未設定" }}</p>
+                        <p><strong>アカウント作成日:</strong> {{ user.date_joined|date:"Y年m月d日" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>最終ログイン:</strong> {{ user.last_login|date:"Y年m月d日 H:i"|default:"初回ログイン" }}</p>
+                        <p><strong>プロフィール作成日:</strong> {{ profile.created_at|date:"Y年m月d日" }}</p>
+                        <p><strong>最終更新日:</strong> {{ profile.updated_at|date:"Y年m月d日 H:i" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- 現在の設定サマリー -->
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-cog me-2"></i>現在の設定
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6><i class="fas fa-robot text-primary me-2"></i>AIフィードバック</h6>
+                    <span class="badge bg-primary">
+                        {% if profile.ai_feedback_frequency == 'daily' %}毎日
+                        {% elif profile.ai_feedback_frequency == 'weekly' %}週1回
+                        {% elif profile.ai_feedback_frequency == 'biweekly' %}2週間に1回
+                        {% elif profile.ai_feedback_frequency == 'monthly' %}月1回
+                        {% else %}未設定{% endif %}
+                    </span>
+                </div>
+                
+                <div class="mb-3">
+                    <h6><i class="fas fa-bell text-warning me-2"></i>通知設定</h6>
+                    {% if profile.notification_enabled %}
+                        <span class="badge bg-success">有効</span>
+                    {% else %}
+                        <span class="badge bg-secondary">無効</span>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <h6><i class="fas fa-tags text-success me-2"></i>興味カテゴリ</h6>
+                    <p class="mb-1">
+                        {% if profile.preferred_categories.all %}
+                            {% for category in profile.preferred_categories.all %}
+                                <span class="badge me-1" style="background-color: {{ category.color }};">
+                                    {{ category.name }}
+                                </span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="text-muted">未設定</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- プロフィール設定のコツ -->
+        <div class="card mt-4">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>プロフィール設定のコツ
+                </h6>
+            </div>
+            <div class="card-body">
+                <h6><i class="fas fa-user-edit text-primary me-2"></i>自己紹介</h6>
+                <ul class="small">
+                    <li>具体的な目標を書く</li>
+                    <li>興味や趣味を記載</li>
+                    <li>現在の課題を明記</li>
+                </ul>
+                
+                <h6><i class="fas fa-robot text-info me-2"></i>AI設定</h6>
+                <ul class="small">
+                    <li>頻度は無理のない範囲で</li>
+                    <li>興味カテゴリは絞り込み</li>
+                    <li>定期的に見直す</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- データエクスポート -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-download me-2"></i>データ管理
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted">
+                    あなたのデータは安全に管理されています。
+                    必要に応じてデータのエクスポートや削除が可能です。
+                </p>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary btn-sm" disabled>
+                        <i class="fas fa-download me-1"></i>データエクスポート
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" disabled>
+                        <i class="fas fa-trash me-1"></i>アカウント削除
+                    </button>
+                </div>
+                <small class="text-muted">
+                    ※ これらの機能は現在開発中です
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 設定の効果について -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-warning text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>設定の効果について
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6><i class="fas fa-robot text-primary me-2"></i>AIフィードバック頻度</h6>
+                        <p class="small">
+                            設定した頻度に応じて、AIがあなたの習慣化の進捗を分析し、
+                            適切なタイミングで提案や振り返りを提供します。
+                        </p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6><i class="fas fa-tags text-success me-2"></i>興味カテゴリ</h6>
+                        <p class="small">
+                            選択したカテゴリに関連する習慣や目標の提案が増え、
+                            よりあなたの興味に合った内容を受け取れます。
+                        </p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6><i class="fas fa-bell text-warning me-2"></i>通知設定</h6>
+                        <p class="small">
+                            習慣化のリマインダーやAI提案の通知を受け取ることで、
+                            継続のモチベーションを維持できます。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-control:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+    
+    .form-select:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+    
+    .card-header.bg-info {
+        background-color: #17a2b8 !important;
+    }
+    
+    .card-header.bg-success {
+        background-color: #28a745 !important;
+    }
+    
+    .card-header.bg-warning {
+        background-color: #ffc107 !important;
+        color: #212529 !important;
+    }
+</style>
+{% endblock %}

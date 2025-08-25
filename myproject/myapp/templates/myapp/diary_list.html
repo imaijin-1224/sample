@@ -1,0 +1,191 @@
+{% extends 'myapp/base.html' %}
+
+{% block title %}日記一覧 - AI習慣形成サポーター{% endblock %}
+
+<!-- 日記一覧画面 -->
+
+{% block content %}
+<!-- ヘッダー（ページタイトル・新規作成ボタンなど） -->
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-book me-2"></i>日記一覧
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'myapp:diary_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>今日の日記を書く
+        </a>
+    </div>
+</div>
+
+<!-- 日記一覧カード・統計など -->
+<div class="card">
+    <div class="card-header">
+        <h6 class="mb-0">
+            <i class="fas fa-list me-2"></i>記録された日記
+        </h6>
+    </div>
+    <div class="card-body">
+        <!-- 日記カード一覧 -->
+        {% if diaries %}
+            <div class="row">
+                {% for diary in diaries %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <i class="fas fa-calendar me-2"></i>{{ diary.date|date:"m/d" }}
+                            </h6>
+                            <div>
+                                <span class="badge bg-primary me-1">
+                                    <i class="fas fa-heart me-1"></i>{{ diary.mood_score }}
+                                </span>
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-bolt me-1"></i>{{ diary.energy_level }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            {% if diary.content %}
+                                <p class="card-text">{{ diary.content|truncatechars:100 }}</p>
+                            {% else %}
+                                <p class="card-text text-muted">内容が記録されていません</p>
+                            {% endif %}
+                            
+                            {% if diary.gratitude %}
+                                <div class="mt-3">
+                                    <small class="text-muted">
+                                        <i class="fas fa-heart text-success me-1"></i>感謝の気持ち
+                                    </small>
+                                    <p class="mb-0 small">{{ diary.gratitude|truncatechars:80 }}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="{% url 'myapp:diary_detail' diary.id %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-eye me-1"></i>詳細
+                                </a>
+                                <small class="text-muted">
+                                    {{ diary.date|date:"Y年m月d日" }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- 統計情報 -->
+            <div class="row mt-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">{{ diaries.count }}</h5>
+                            <p class="card-text">総日記数</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">
+                                {% for diary in diaries %}
+                                    {% if forloop.first %}
+                                        {{ diary.mood_score }}
+                                    {% endif %}
+                                {% endfor %}
+                            </h5>
+                            <p class="card-text">平均気分</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">
+                                {% for diary in diaries %}
+                                    {% if forloop.first %}
+                                        {{ diary.energy_level }}
+                                    {% endif %}
+                                {% endfor %}
+                            </h5>
+                            <p class="card-text">平均エネルギー</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">
+                                {% for diary in diaries %}
+                                    {% if forloop.first %}
+                                        {{ diary.date|date:"m/d" }}
+                                    {% endif %}
+                                {% endfor %}
+                            </h5>
+                            <p class="card-text">最新の日記</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">まだ日記がありません</h5>
+                <p class="text-muted">最初の日記を書いて、習慣化を始めましょう！</p>
+                <a href="{% url 'myapp:diary_create' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i>最初の日記を書く
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 日記を書くコツ -->
+<div class="card mt-4">
+    <div class="card-header bg-info text-white">
+        <h6 class="mb-0">
+            <i class="fas fa-lightbulb me-2"></i>日記を書くコツ
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h6><i class="fas fa-heart text-danger me-2"></i>気分スコアについて</h6>
+                <ul class="small">
+                    <li>1-3: 落ち込んでいる、疲れている</li>
+                    <li>4-6: 普通、安定している</li>
+                    <li>7-10: 良い気分、元気</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h6><i class="fas fa-bolt text-warning me-2"></i>エネルギーレベルについて</h6>
+                <ul class="small">
+                    <li>1-3: 疲れている、眠い</li>
+                    <li>4-6: 普通のエネルギー</li>
+                    <li>7-10: 元気、やる気満々</li>
+                </ul>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-md-6">
+                <h6><i class="fas fa-pen text-primary me-2"></i>日記の書き方</h6>
+                <ul class="small">
+                    <li>具体的な出来事を書く</li>
+                    <li>感情や考えを素直に表現</li>
+                    <li>良いことも悪いことも記録</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h6><i class="fas fa-heart text-success me-2"></i>感謝の気持ち</h6>
+                <ul class="small">
+                    <li>小さなことでも感謝を</li>
+                    <li>人、物、出来事への感謝</li>
+                    <li>毎日3つ見つけてみよう</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

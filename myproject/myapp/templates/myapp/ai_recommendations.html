@@ -1,0 +1,239 @@
+{% extends 'myapp/base.html' %}
+
+{% block title %}AI提案一覧 - AI習慣形成サポーター{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-robot me-2"></i>AI提案一覧
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'myapp:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>ダッシュボードに戻る
+        </a>
+    </div>
+</div>
+
+<!-- フィルター -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h6 class="mb-0">
+            <i class="fas fa-filter me-2"></i>フィルター
+        </h6>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label for="type" class="form-label">提案タイプ</label>
+                <select name="type" id="type" class="form-select">
+                    <option value="">すべてのタイプ</option>
+                    <option value="daily_goal" {% if request.GET.type == 'daily_goal' %}selected{% endif %}>日次目標</option>
+                    <option value="reflection" {% if request.GET.type == 'reflection' %}selected{% endif %}>週次振り返り</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="priority" class="form-label">優先度</label>
+                <select name="priority" id="priority" class="form-select">
+                    <option value="">すべての優先度</option>
+                    <option value="high" {% if request.GET.priority == 'high' %}selected{% endif %}>高</option>
+                    <option value="medium" {% if request.GET.priority == 'medium' %}selected{% endif %}>中</option>
+                    <option value="low" {% if request.GET.priority == 'low' %}selected{% endif %}>低</option>
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-outline-primary me-2">
+                    <i class="fas fa-search me-1"></i>フィルター
+                </button>
+                <a href="{% url 'myapp:ai_recommendations' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-1"></i>クリア
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- AI提案一覧 -->
+<div class="card">
+    <div class="card-header">
+        <h6 class="mb-0">
+            <i class="fas fa-lightbulb me-2"></i>AIからの提案
+        </h6>
+    </div>
+    <div class="card-body">
+        {% if recommendations %}
+            <div class="row">
+                {% for recommendation in recommendations %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 border-{% if recommendation.priority == 'high' %}danger{% elif recommendation.priority == 'medium' %}warning{% else %}info{% endif %}">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <i class="fas fa-{% if recommendation.recommendation_type == 'daily_goal' %}bullseye{% else %}chart-line{% endif %} me-2"></i>
+                                {% if recommendation.recommendation_type == 'daily_goal' %}日次目標{% else %}週次振り返り{% endif %}
+                            </h6>
+                            <span class="badge bg-{% if recommendation.priority == 'high' %}danger{% elif recommendation.priority == 'medium' %}warning{% else %}info{% endif %}">
+                                {% if recommendation.priority == 'high' %}高
+                                {% elif recommendation.priority == 'medium' %}中
+                                {% else %}低{% endif %}
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-title">{{ recommendation.title }}</h6>
+                            <p class="card-text">{{ recommendation.content|truncatechars:100 }}</p>
+                            
+                            {% if recommendation.action_items %}
+                                <div class="mb-3">
+                                    <small class="text-muted">
+                                        <i class="fas fa-tasks me-1"></i>アクション項目
+                                    </small>
+                                    <ul class="small mb-0">
+                                        {% for item in recommendation.action_items|slice:":2" %}
+                                            <li>{{ item }}</li>
+                                        {% endfor %}
+                                        {% if recommendation.action_items|length > 2 %}
+                                            <li class="text-muted">他{{ recommendation.action_items|length|add:"-2" }}項目...</li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="mb-3">
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar me-1"></i>{{ recommendation.date|date:"m/d" }}
+                                </small>
+                            </div>
+                            
+                            {% if recommendation.feedback_rating %}
+                                <div class="mb-3">
+                                    <small class="text-muted">評価: </small>
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= recommendation.feedback_rating %}
+                                            <i class="fas fa-star text-warning"></i>
+                                        {% else %}
+                                            <i class="far fa-star text-muted"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="{% url 'myapp:ai_recommendation_detail' recommendation.id %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-eye me-1"></i>詳細
+                                </a>
+                                <small class="text-muted">
+                                    {% if recommendation.is_implemented %}
+                                        <span class="badge bg-success">実装済み</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">未実装</span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- 統計情報 -->
+            <div class="row mt-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">{{ recommendations.count }}</h5>
+                            <p class="card-text">総提案数</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">
+                                {% for rec in recommendations %}
+                                    {% if forloop.first %}
+                                        {{ rec.feedback_rating|default:"0" }}
+                                    {% endif %}
+                                {% endfor %}
+                            </h5>
+                            <p class="card-text">平均評価</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">
+                                {% for rec in recommendations %}
+                                    {% if forloop.first %}
+                                        {{ rec.recommendation_type|yesno:"日次目標,週次振り返り" }}
+                                    {% endif %}
+                                {% endfor %}
+                            </h5>
+                            <p class="card-text">最新の提案タイプ</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">
+                                {% for rec in recommendations %}
+                                    {% if forloop.first %}
+                                        {{ rec.priority|yesno:"高,中,低" }}
+                                    {% endif %}
+                                {% endfor %}
+                            </h5>
+                            <p class="card-text">最新の優先度</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-robot fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">まだAI提案がありません</h5>
+                <p class="text-muted">日記や行動ログを記録すると、AIがあなたに合った提案をしてくれます！</p>
+                <a href="{% url 'myapp:dashboard' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-home me-2"></i>ダッシュボードに戻る
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- AI提案について -->
+<div class="card mt-4">
+    <div class="card-header bg-info text-white">
+        <h6 class="mb-0">
+            <i class="fas fa-info-circle me-2"></i>AI提案について
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h6><i class="fas fa-bullseye text-primary me-2"></i>日次目標</h6>
+                <p class="small">
+                    過去1週間の日記と行動ログを分析して、あなたの気分とエネルギーレベルに合わせた
+                    今日の目標を提案します。無理のない範囲で、継続しやすい習慣を提案します。
+                </p>
+            </div>
+            <div class="col-md-6">
+                <h6><i class="fas fa-chart-line text-success me-2"></i>週次振り返り</h6>
+                <p class="small">
+                    1週間の行動パターンと目標達成率を分析して、改善点と次のステップを提案します。
+                    習慣化の進捗を可視化し、継続のモチベーションを高めます。
+                </p>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-md-12">
+                <h6><i class="fas fa-star text-warning me-2"></i>フィードバックの重要性</h6>
+                <p class="small mb-0">
+                    各提案に対して評価を送信することで、AIがよりあなたに合った提案をできるようになります。
+                    実装した提案があれば、その効果も教えてください。
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

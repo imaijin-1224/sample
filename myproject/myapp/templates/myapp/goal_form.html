@@ -1,0 +1,197 @@
+{% extends 'myapp/base.html' %}
+
+{% block title %}
+{% if is_edit %}目標編集{% else %}目標作成{% endif %} - AI習慣形成サポーター
+{% endblock %}
+
+<!-- 目標の作成・編集フォーム画面 -->
+
+{% block content %}
+<!-- フォームヘッダー -->
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-bullseye me-2"></i>
+        {% if is_edit %}目標編集{% else %}目標作成{% endif %}
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'myapp:goal_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>一覧に戻る
+        </a>
+    </div>
+</div>
+
+<!-- 目標入力フォーム -->
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-{% if is_edit %}edit{% else %}plus{% endif %} me-2"></i>
+                    {% if is_edit %}目標を編集{% else %}新しい目標を設定{% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- 目標フォーム本体 -->
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">
+                            <i class="fas fa-bullseye me-2"></i>{{ form.title.label }}
+                        </label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.title.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            例：「毎日30分の読書」「週3回の筋トレ」「月1冊の本を読む」
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">
+                            <i class="fas fa-align-left me-2"></i>{{ form.description.label }}
+                        </label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.description.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            目標の詳細、なぜこの目標を立てたのか、達成したらどうなるかなどを書いてください
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.category.id_for_label }}" class="form-label">
+                                <i class="fas fa-tags me-2"></i>{{ form.category.label }}
+                            </label>
+                            {{ form.category }}
+                            {% if form.category.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.category.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.target_date.id_for_label }}" class="form-label">
+                                <i class="fas fa-calendar me-2"></i>{{ form.target_date.label }}
+                            </label>
+                            {{ form.target_date }}
+                            {% if form.target_date.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.target_date.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">
+                                <i class="fas fa-flag me-2"></i>{{ form.status.label }}
+                            </label>
+                            {{ form.status }}
+                            {% if form.status.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.status.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.priority.id_for_label }}" class="form-label">
+                                <i class="fas fa-exclamation-triangle me-2"></i>{{ form.priority.label }}
+                            </label>
+                            {{ form.priority }}
+                            {% if form.priority.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.priority.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'myapp:goal_list' %}" class="btn btn-outline-secondary me-md-2">
+                            <i class="fas fa-times me-1"></i>キャンセル
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-{% if is_edit %}save{% else %}plus{% endif %} me-1"></i>
+                            {% if is_edit %}更新{% else %}作成{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- 目標設定のコツ -->
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>効果的な目標設定のコツ
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-check-circle text-success me-2"></i>SMART原則</h6>
+                        <ul class="small">
+                            <li><strong>Specific（具体的）</strong>：「運動する」→「毎日30分歩く」</li>
+                            <li><strong>Measurable（測定可能）</strong>：数値で進捗を確認</li>
+                            <li><strong>Achievable（達成可能）</strong>：現実的な目標を</li>
+                            <li><strong>Relevant（関連性）</strong>：人生の目標と関連</li>
+                            <li><strong>Time-bound（期限設定）</strong>：具体的な期限を</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-chart-line text-primary me-2"></i>習慣化のステップ</h6>
+                        <ul class="small">
+                            <li><strong>1. 小さく始める</strong>：5分からでもOK</li>
+                            <li><strong>2. ルーティン化</strong>：毎日同じ時間に</li>
+                            <li><strong>3. 環境を整える</strong>：邪魔になるものを排除</li>
+                            <li><strong>4. 記録する</strong>：進捗を可視化</li>
+                            <li><strong>5. 継続する</strong>：21日で習慣化</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-control:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+    
+    .form-select:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+    
+    .card-header.bg-info {
+        background-color: #17a2b8 !important;
+    }
+</style>
+{% endblock %}

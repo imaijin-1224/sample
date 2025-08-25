@@ -1,0 +1,188 @@
+{% extends 'myapp/base.html' %}
+
+{% block title %}
+{% if is_edit %}日記編集{% else %}日記作成{% endif %} - AI習慣形成サポーター
+{% endblock %}
+
+<!-- 日記の作成・編集フォーム画面 -->
+
+{% block content %}
+<!-- フォームヘッダー -->
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-book me-2"></i>
+        {% if is_edit %}日記編集{% else %}日記作成{% endif %}
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'myapp:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>ダッシュボードに戻る
+        </a>
+    </div>
+</div>
+
+<!-- 日記入力フォーム -->
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-{% if is_edit %}edit{% else %}plus{% endif %} me-2"></i>
+                    {% if is_edit %}今日の日記を編集{% else %}今日の日記を書く{% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- 日記フォーム本体 -->
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <label for="{{ form.mood_score.id_for_label }}" class="form-label">
+                                <i class="fas fa-heart me-2"></i>{{ form.mood_score.label }}
+                            </label>
+                            {{ form.mood_score }}
+                            {% if form.mood_score.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.mood_score.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                1: とても落ち込んでいる 〜 10: 最高の気分
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-4">
+                            <label for="{{ form.energy_level.id_for_label }}" class="form-label">
+                                <i class="fas fa-bolt me-2"></i>{{ form.energy_level.label }}
+                            </label>
+                            {{ form.energy_level }}
+                            {% if form.energy_level.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.energy_level.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                1: エネルギー不足 〜 10: エネルギー満タン
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="{{ form.content.id_for_label }}" class="form-label">
+                            <i class="fas fa-pen me-2"></i>{{ form.content.label }}
+                        </label>
+                        {{ form.content }}
+                        {% if form.content.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.content.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            今日の出来事、感じたこと、考えたことなどを自由に書いてください
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="{{ form.gratitude.id_for_label }}" class="form-label">
+                            <i class="fas fa-heart me-2"></i>{{ form.gratitude.label }}
+                        </label>
+                        {{ form.gratitude }}
+                        {% if form.gratitude.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.gratitude.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            今日感謝していること、ありがたいと感じたことを書いてください
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'myapp:dashboard' %}" class="btn btn-outline-secondary me-md-2">
+                            <i class="fas fa-times me-1"></i>キャンセル
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-{% if is_edit %}save{% else %}plus{% endif %} me-1"></i>
+                            {% if is_edit %}更新{% else %}保存{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- 日記を書くコツ -->
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>日記を書くコツ
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-heart text-danger me-2"></i>気分スコアについて</h6>
+                        <ul class="small">
+                            <li>1-3: 落ち込んでいる、疲れている</li>
+                            <li>4-6: 普通、安定している</li>
+                            <li>7-10: 良い気分、元気</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-bolt text-warning me-2"></i>エネルギーレベルについて</h6>
+                        <ul class="small">
+                            <li>1-3: 疲れている、眠い</li>
+                            <li>4-6: 普通のエネルギー</li>
+                            <li>7-10: 元気、やる気満々</li>
+                        </ul>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-pen text-primary me-2"></i>日記の書き方</h6>
+                        <ul class="small">
+                            <li>具体的な出来事を書く</li>
+                            <li>感情や考えを素直に表現</li>
+                            <li>良いことも悪いことも記録</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-heart text-success me-2"></i>感謝の気持ち</h6>
+                        <ul class="small">
+                            <li>小さなことでも感謝を</li>
+                            <li>人、物、出来事への感謝</li>
+                            <li>毎日3つ見つけてみよう</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-control:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+    
+    .form-select:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+    
+    .card-header.bg-info {
+        background-color: #17a2b8 !important;
+    }
+</style>
+{% endblock %}

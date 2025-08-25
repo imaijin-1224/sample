@@ -1,0 +1,338 @@
+{% extends 'myapp/base.html' %}
+
+{% block title %}AI提案詳細 - AI習慣形成サポーター{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-robot me-2"></i>AI提案詳細
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'myapp:ai_recommendations' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>一覧に戻る
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <!-- AI提案詳細 -->
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-{% if recommendation.recommendation_type == 'daily_goal' %}bullseye{% else %}chart-line{% endif %} me-2"></i>
+                        {{ recommendation.title }}
+                    </h5>
+                    <div>
+                        <span class="badge bg-{% if recommendation.priority == 'high' %}danger{% elif recommendation.priority == 'medium' %}warning{% else %}info{% endif %} me-2">
+                            {% if recommendation.priority == 'high' %}高優先度
+                            {% elif recommendation.priority == 'medium' %}中優先度
+                            {% else %}低優先度{% endif %}
+                        </span>
+                        <span class="badge bg-secondary">
+                            {% if recommendation.recommendation_type == 'daily_goal' %}日次目標{% else %}週次振り返り{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h6><i class="fas fa-align-left text-primary me-2"></i>提案内容</h6>
+                    <div class="p-3 bg-light rounded">
+                        {{ recommendation.content|linebreaks }}
+                    </div>
+                </div>
+                
+                {% if recommendation.reasoning %}
+                    <div class="mb-4">
+                        <h6><i class="fas fa-brain text-info me-2"></i>AIの分析根拠</h6>
+                        <div class="p-3 bg-light rounded">
+                            {{ recommendation.reasoning|linebreaks }}
+                        </div>
+                    </div>
+                {% endif %}
+                
+                {% if recommendation.action_items %}
+                    <div class="mb-4">
+                        <h6><i class="fas fa-tasks text-success me-2"></i>具体的なアクション項目</h6>
+                        <div class="p-3 bg-light rounded">
+                            <ul class="mb-0">
+                                {% for item in recommendation.action_items %}
+                                    <li>{{ item }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ recommendation.date|date:"m/d" }}</h5>
+                                <p class="card-text">提案日</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card {% if recommendation.is_implemented %}bg-success{% else %}bg-secondary{% endif %} text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    {% if recommendation.is_implemented %}
+                                        <i class="fas fa-check"></i>
+                                    {% else %}
+                                        <i class="fas fa-clock"></i>
+                                    {% endif %}
+                                </h5>
+                                <p class="card-text">
+                                    {% if recommendation.is_implemented %}実装済み{% else %}未実装{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card {% if recommendation.feedback_rating %}bg-warning{% else %}bg-light{% endif %} text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    {% if recommendation.feedback_rating %}
+                                        {{ recommendation.feedback_rating }}/5
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </h5>
+                                <p class="card-text">評価</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        作成日時: {{ recommendation.created_at|date:"Y年m月d日 H:i" }}
+                        {% if recommendation.updated_at != recommendation.created_at %}
+                            <br>更新日時: {{ recommendation.updated_at|date:"Y年m月d日 H:i" }}
+                        {% endif %}
+                    </small>
+                    <div>
+                        <button class="btn btn-outline-success btn-sm me-2" data-bs-toggle="modal" data-bs-target="#implementationModal">
+                            <i class="fas fa-check me-1"></i>実装完了
+                        </button>
+                        <button class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#feedbackModal">
+                            <i class="fas fa-star me-1"></i>評価する
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 実装状況の更新 -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-cog me-2"></i>実装状況の管理
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="is_implemented" name="is_implemented" 
+                                       {% if recommendation.is_implemented %}checked{% endif %}>
+                                <label class="form-check-label" for="is_implemented">
+                                    <i class="fas fa-check-circle text-success me-2"></i>この提案を実装しました
+                                </label>
+                            </div>
+                            <div class="form-text">
+                                実装した場合はチェックを入れてください
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>更新
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- フィードバック -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-star me-2"></i>フィードバック
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="rating" class="form-label">この提案の評価</label>
+                            <select name="rating" id="rating" class="form-select">
+                                <option value="">評価を選択</option>
+                                <option value="1" {% if recommendation.feedback_rating == 1 %}selected{% endif %}>1 - あまり役に立たない</option>
+                                <option value="2" {% if recommendation.feedback_rating == 2 %}selected{% endif %}>2 - 少し役に立つ</option>
+                                <option value="3" {% if recommendation.feedback_rating == 3 %}selected{% endif %}>3 - 普通</option>
+                                <option value="4" {% if recommendation.feedback_rating == 4 %}selected{% endif %}>4 - 役に立つ</option>
+                                <option value="5" {% if recommendation.feedback_rating == 5 %}selected{% endif %}>5 - とても役に立つ</option>
+                            </select>
+                            <div class="form-text">
+                                この提案がどれくらい役に立ったか評価してください
+                            </div>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-paper-plane me-1"></i>フィードバックを送信
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- 次のステップ -->
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>次のステップ
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-arrow-right text-primary me-2"></i>提案を実装する</h6>
+                        <ul class="small">
+                            <li>アクション項目を1つずつ実行</li>
+                            <li>無理のない範囲で始める</li>
+                            <li>継続しやすい習慣にする</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-chart-line text-success me-2"></i>進捗を記録</h6>
+                        <ul class="small">
+                            <li>行動ログで実装状況を記録</li>
+                            <li>日記で効果を振り返る</li>
+                            <li>AIにフィードバックを送信</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 実装完了モーダル -->
+<div class="modal fade" id="implementationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">実装完了の確認</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>このAI提案を実装完了としてマークしますか？</p>
+                <p class="text-muted small">
+                    実装完了にすると、AIがより適切な提案をできるようになります。
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-success" onclick="markAsImplemented()">
+                    <i class="fas fa-check me-1"></i>実装完了
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 評価モーダル -->
+<div class="modal fade" id="feedbackModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">提案の評価</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>このAI提案を評価してください：</p>
+                <div class="text-center">
+                    <div class="rating-stars">
+                        <i class="far fa-star fa-2x text-warning me-2" data-rating="1"></i>
+                        <i class="far fa-star fa-2x text-warning me-2" data-rating="2"></i>
+                        <i class="far fa-star fa-2x text-warning me-2" data-rating="3"></i>
+                        <i class="far fa-star fa-2x text-warning me-2" data-rating="4"></i>
+                        <i class="far fa-star fa-2x text-warning me-2" data-rating="5"></i>
+                    </div>
+                    <p class="mt-2" id="rating-text">評価を選択してください</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-warning" onclick="submitRating()">
+                    <i class="fas fa-star me-1"></i>評価を送信
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedRating = 0;
+
+// 星の評価機能
+document.querySelectorAll('.rating-stars i').forEach(star => {
+    star.addEventListener('click', function() {
+        const rating = parseInt(this.dataset.rating);
+        selectedRating = rating;
+        
+        // 星の表示を更新
+        document.querySelectorAll('.rating-stars i').forEach((s, index) => {
+            if (index < rating) {
+                s.className = 'fas fa-star fa-2x text-warning me-2';
+            } else {
+                s.className = 'far fa-star fa-2x text-warning me-2';
+            }
+        });
+        
+        // 評価テキストを更新
+        const ratingTexts = [
+            '1 - あまり役に立たない',
+            '2 - 少し役に立つ',
+            '3 - 普通',
+            '4 - 役に立つ',
+            '5 - とても役に立つ'
+        ];
+        document.getElementById('rating-text').textContent = ratingTexts[rating - 1];
+    });
+});
+
+// 実装完了としてマーク
+function markAsImplemented() {
+    const checkbox = document.getElementById('is_implemented');
+    checkbox.checked = true;
+    document.getElementById('implementationModal').querySelector('.btn-close').click();
+}
+
+// 評価を送信
+function submitRating() {
+    if (selectedRating > 0) {
+        const select = document.getElementById('rating');
+        select.value = selectedRating;
+        document.getElementById('feedbackModal').querySelector('.btn-close').click();
+        
+        // フォームを自動送信
+        const form = document.querySelector('form[method="post"]');
+        form.submit();
+    } else {
+        alert('評価を選択してください');
+    }
+}
+</script>
+{% endblock %}

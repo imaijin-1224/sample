@@ -1,0 +1,185 @@
+{% extends 'myapp/base.html' %}
+
+{% block title %}
+{% if is_edit %}行動ログ編集{% else %}行動ログ作成{% endif %} - AI習慣形成サポーター
+{% endblock %}
+
+<!-- 行動ログの作成・編集フォーム画面 -->
+
+{% block content %}
+<!-- フォームヘッダー -->
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-list-check me-2"></i>
+        {% if is_edit %}行動ログ編集{% else %}行動ログ作成{% endif %}
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'myapp:action_log_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>一覧に戻る
+        </a>
+    </div>
+</div>
+
+<!-- 行動ログ入力フォーム -->
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-{% if is_edit %}edit{% else %}plus{% endif %} me-2"></i>
+                    {% if is_edit %}行動ログを編集{% else %}新しい行動を記録{% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- 行動ログフォーム本体 -->
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.category.id_for_label }}" class="form-label">
+                                <i class="fas fa-tags me-1"></i>{{ form.category.label }}
+                            </label>
+                            {{ form.category }}
+                            {% if form.category.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.category.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.date.id_for_label }}" class="form-label">
+                                <i class="fas fa-calendar me-1"></i>{{ form.date.label }}
+                            </label>
+                            {{ form.date }}
+                            {% if form.date.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.date.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.action_name.id_for_label }}" class="form-label">
+                            <i class="fas fa-tasks me-1"></i>{{ form.action_name.label }}
+                        </label>
+                        {{ form.action_name }}
+                        {% if form.action_name.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.action_name.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            例：30分の散歩、読書、瞑想、筋トレなど
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.duration_minutes.id_for_label }}" class="form-label">
+                                <i class="fas fa-clock me-1"></i>{{ form.duration_minutes.label }}
+                            </label>
+                            {{ form.duration_minutes }}
+                            {% if form.duration_minutes.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.duration_minutes.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">分単位で入力してください</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check mt-4 pt-3">
+                                {{ form.completed }}
+                                <label class="form-check-label" for="{{ form.completed.id_for_label }}">
+                                    <i class="fas fa-check-circle me-1"></i>{{ form.completed.label }}
+                                </label>
+                            </div>
+                            {% if form.completed.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.completed.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="{{ form.notes.id_for_label }}" class="form-label">
+                            <i class="fas fa-sticky-note me-1"></i>{{ form.notes.label }}
+                        </label>
+                        {{ form.notes }}
+                        {% if form.notes.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.notes.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            行動についてのメモや感想があれば記入してください
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'myapp:action_log_list' %}" class="btn btn-outline-secondary me-md-2">
+                            <i class="fas fa-times me-1"></i>キャンセル
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-{% if is_edit %}save{% else %}plus{% endif %} me-1"></i>
+                            {% if is_edit %}更新{% else %}作成{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- ヒントカード -->
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>行動ログの記録のコツ
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li><strong>具体的に記録する</strong>：「運動」ではなく「30分の散歩」のように具体的に</li>
+                    <li><strong>継続時間を正確に</strong>：実際にかかった時間を記録しましょう</li>
+                    <li><strong>完了状況を正直に</strong>：できなかった日も記録することで改善点が見えてきます</li>
+                    <li><strong>メモを活用</strong>：気分や体調、環境なども記録すると分析に役立ちます</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-control:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+    
+    .form-check-input:checked {
+        background-color: #4e73df;
+        border-color: #4e73df;
+    }
+    
+    .form-check-input:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+</style>
+{% endblock %}
